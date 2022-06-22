@@ -17,19 +17,20 @@ export default class News extends Component {
         pageSize: PropTypes.number
     }
 
-    constructor() {
-        super();
+    constructor(props) {
+        super(props);
         this.state = {
             articles: null,
             loading: false,
             page: 1,
             totalSize: 0
         }
+        document.title = `Newsify - ${this.props.category.charAt(0).toUpperCase() + this.props.category.slice(1)} Headlines`
     }
 
-    async componentDidMount() {
-        this.setState({ loading: true });
-        let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=c7be2530430c47dca2cd89d8d4ee073b&page=${this.state.page}&pageSize=${this.props.pageSize}`;
+    async updateNews(pageNum) {
+        this.setState({ loading: true })
+        let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=c7be2530430c47dca2cd89d8d4ee073b&page=${pageNum}&pageSize=${this.props.pageSize}`;
         let data = await fetch(url);
         let parsedData = await data.json()
         if (parsedData.status === 'error') {
@@ -43,41 +44,24 @@ export default class News extends Component {
         }
     }
 
+    async componentDidMount() {
+        this.updateNews(this.state.page);
+    }
+
     handleNextClick = async () => {
-        this.setState({ loading: true })
-        let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=c7be2530430c47dca2cd89d8d4ee073b&page=${this.state.page + 1}&pageSize=${this.props.pageSize}`;
-        let data = await fetch(url);
-        let parsedData = await data.json()
-        if (parsedData.status === 'error') {
-            console.log(parsedData.status);
-        } else {
-            this.setState({
-                articles: parsedData.articles,
-                page: this.state.page + 1,
-                loading: false
-            });
-        }
+        this.updateNews(this.state.page + 1);
+        this.setState({ page: this.state.page + 1 });
     }
 
     handlePrevClick = async () => {
-        this.setState({ loading: true })
-        let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=c7be2530430c47dca2cd89d8d4ee073b&page=${this.state.page - 1}&pageSize=${this.props.pageSize}`;
-        let data = await fetch(url);
-        let parsedData = await data.json()
-        if (parsedData.status === 'error') {
-            console.log(parsedData.status);
-        } else {
-            this.setState({
-                articles: parsedData.articles,
-                page: this.state.page - 1,
-                loading: false
-            });
-        }
+        this.updateNews(this.state.page - 1);
+        this.setState({ page: this.state.page - 1 });
     }
+
     render() {
         return (
             <div className='container my-3' style={{ textAlign: 'center' }}>
-                <h2>{this.props.category.charAt(0).toUpperCase() + this.props.category.slice(1)} - Top Headlines</h2>
+                <h2>Newsify - Top Headlines</h2>
                 {(
                     this.state.loading ?
                         <div className='container d-flex justify-content-center align-items-center' style={{ height: '100vh' }}>
@@ -89,7 +73,7 @@ export default class News extends Component {
                             <div>
                                 <div className='row'>
                                     {this.state.articles.map(ele =>
-                                        <div className='col-md-4' key={ele.url}>
+                                        <div className='col-md-4 mb-4' key={ele.url}>
                                             <NewsItem title={ele.title ? ele.title : ""} description={ele.description ? ele.description : ""} imageUrl={ele.urlToImage} url={ele.url} author={ele.author === null ? "Unknown" : ele.author} date={ele.publishedAt} source={ele.source.name} />
                                         </div>
                                     )}
