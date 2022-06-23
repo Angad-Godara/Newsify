@@ -31,11 +31,16 @@ export default class News extends Component {
 
     async updateNews(pageNum) {
         this.setState({ loading: true })
-        let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=2c697f7d6f1a4a88ab6407fcc5d9f122&page=${pageNum}&pageSize=${this.props.pageSize}`;
+        this.props.setProgress(10);
+        let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=${this.props.apiKey}&page=${pageNum}&pageSize=${this.props.pageSize}`;
+        this.props.setProgress(30);
         let data = await fetch(url);
+        this.props.setProgress(70);
         let parsedData = await data.json()
         if (parsedData.status === 'error') {
-            console.log(parsedData.status);
+            this.setState({
+                err: parsedData.status
+            })
         } else {
             this.setState({
                 articles: parsedData.articles,
@@ -43,6 +48,7 @@ export default class News extends Component {
                 loading: false
             });
         }
+        this.props.setProgress(100);
     }
 
     async componentDidMount() {
@@ -62,7 +68,7 @@ export default class News extends Component {
     fetchMoreData = async () => {
         let newpage = this.state.page + 1;
         this.setState({ page: newpage })
-        let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=2c697f7d6f1a4a88ab6407fcc5d9f122&page=${newpage}&pageSize=${this.props.pageSize}`;
+        let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=${this.props.apiKey}&page=${newpage}&pageSize=${this.props.pageSize}`;
         let data = await fetch(url);
         let parsedData = await data.json()
         if (parsedData.status === 'error') {
@@ -81,16 +87,20 @@ export default class News extends Component {
         return (
             <div className='container my-3' style={{ textAlign: 'center' }}>
                 <h2>Newsify - Top Headlines</h2>
-                {(
-                    this.state.loading &&
-                    <div className='container d-flex justify-content-center align-items-center' style={{ height: '100vh' }}>
-                        <Spinner />
-                    </div>)}
+                {
+                    (this.state.err ? <div className='container d-flex justify-content-center align-items-center' style={{ height: '100vh' }}><h3> Unable to fetch news!</h3></div>
+
+                        : (
+                            this.state.loading &&
+                            <div div className='container d-flex justify-content-center align-items-center' style={{ height: '100vh' }}>
+                                <Spinner />
+                            </div>))
+                }
 
                 <InfiniteScroll
                     dataLength={this.state.articles.length}
                     next={this.fetchMoreData}
-                    hasMore={this.state.articles.length != this.state.totalSize}
+                    hasMore={this.state.articles.length !== this.state.totalSize}
                     loader={<div className='container d-flex justify-content-center align-items-center' style={{ height: '100vh' }}>
                         <Spinner />
                     </div>}
